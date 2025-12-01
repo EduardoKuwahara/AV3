@@ -11,9 +11,14 @@ cd AV3
 ```
 
 ### 2. Configure o MySQL
+Abra o MySQL Workbench, após isso digite os seguintes comando:
 ```sql
 CREATE DATABASE aerocode;
 ```
+```sql
+USE aerocode;
+```
+Rode o script!
 
 ### 3. Backend
 ```bash
@@ -31,13 +36,25 @@ Execute os comandos:
 npm run db:generate
 npm run db:migrate
 npm run build
+npm run db:seed
 npm run server:prisma
 ```
 
 ### 4. Frontend
+Em outro terminal:
+
 ```bash
 cd frontend
+
 npm install
+```
+
+Crie o arquivo `.env`:
+```env
+REACT_APP_API_URL=http://localhost:3002/api
+```
+Por fim:
+```
 npm start
 ```
 
