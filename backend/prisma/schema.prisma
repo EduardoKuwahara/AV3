@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum TipoAeronave {
+  COMERCIAL
+  MILITAR
+}
+
+enum NivelPermissao {
+  ADMINISTRADOR
+  ENGENHEIRO
+  OPERADOR
+}
+
+enum TipoPeca {
+  NACIONAL
+  IMPORTADA
+}
+
+enum StatusPeca {
+  EM_PRODUCAO
+  EM_TRANSPORTE
+  PRONTA
+}
+
+enum StatusEtapa {
+  PENDENTE
+  ANDAMENTO
+  CONCLUIDA
+}
+
+enum TipoTeste {
+  ELETRICO
+  HIDRAULICO
+  AERODINAMICO
+}
+
+enum ResultadoTeste {
+  APROVADO
+  REPROVADO
+}
+
+// Models
+model Aeronave {
+  id         Int           @id @default(autoincrement())
+  codigo     String        @unique
+  modelo     String
+  tipo       TipoAeronave
+  capacidade Int
+  alcance    Int
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relacionamentos
+  pecas      AeronavePeca[]
+  etapas     AeronaveEtapa[]
+  testes     Teste[]
+  relatorios Relatorio[]
+
+  @@map("aeronaves")
+}
+
+model Funcionario {
+  id             Int             @id @default(autoincrement())
+  idFuncionario  String          @unique
+  nome           String
+  telefone       String
+  endereco       String
+  usuario        String          @unique
+  senhaHash      String
+  salt           String
+  nivelPermissao NivelPermissao
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // Relacionamentos
+  etapas EtapaFuncionario[]
+
+  @@map("funcionarios")
+}
+
+model Peca {
+  id         Int        @id @default(autoincrement())
+  nome       String     @unique
+  tipo       TipoPeca
+  fornecedor String
+  status     StatusPeca @default(EM_PRODUCAO)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relacionamentos
+  aeronaves AeronavePeca[]
+
+  @@map("pecas")
+}
+
+model Etapa {
+  id        Int          @id @default(autoincrement())
+  nome      String       @unique
+  prazo     String
+  status    StatusEtapa  @default(PENDENTE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relacionamentos
+  funcionarios EtapaFuncionario[]
+  aeronaves    AeronaveEtapa[]
+
+  @@map("etapas")
+}
+
+model Teste {
+  id         Int           @id @default(autoincrement())
+  tipo       TipoTeste
+  resultado  ResultadoTeste @default(REPROVADO)
+  aeronaveId Int
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relacionamentos
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [id], onDelete: Cascade)
+
+  @@map("testes")
+}
+
+model Relatorio {
+  id           Int      @id @default(autoincrement())
+  cliente      String
+  dataEntrega  String
+  arquivo      String?
+  conteudo     String   @db.Text
+  aeronaveId   Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [id], onDelete: Cascade)
+
+  @@map("relatorios")
+}
+
+// Tabelas de relacionamento N:N
+model AeronavePeca {
+  aeronaveId Int
+  pecaId     Int
+  createdAt  DateTime @default(now())
+
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [id], onDelete: Cascade)
+  peca     Peca     @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+
+  @@id([aeronaveId, pecaId])
+  @@map("aeronave_pecas")
+}
+
+model AeronaveEtapa {
+  aeronaveId Int
+  etapaId    Int
+  createdAt  DateTime @default(now())
+
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [id], onDelete: Cascade)
+  etapa    Etapa    @relation(fields: [etapaId], references: [id], onDelete: Cascade)
+
+  @@id([aeronaveId, etapaId])
+  @@map("aeronave_etapas")
+}
+
+model EtapaFuncionario {
+  etapaId       Int
+  funcionarioId Int
+  createdAt     DateTime @default(now())
+
+  etapa       Etapa       @relation(fields: [etapaId], references: [id], onDelete: Cascade)
+  funcionario Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+
+  @@id([etapaId, funcionarioId])
+  @@map("etapa_funcionarios")
+}
